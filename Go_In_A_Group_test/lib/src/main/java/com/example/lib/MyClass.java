@@ -5,5 +5,6 @@ public class MyClass {
         // 开启服务器
         ClientManager.startServer(10011);
         ClientManager2.startServer(10010);
+        ClientManager3.startServer(10012);
     }
 }

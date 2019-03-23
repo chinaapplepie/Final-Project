@@ -9,34 +9,31 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-//此服务器用来维护登陆
-public class ClientManager {
+//此类用来新建group
+public class ClientManager3 {
     //Map集合用于储存元素对，Map储存的是一对键值（key和value），是通过key映射到它的value；
     private static Map<String,Socket> clientList = new HashMap<>();
     //ServerThread类（自定义的真正用于多线程实现服务器端的类）
     private static ServerThread serverThread = null;
 
     //Runnable是Thread的接口。实现Runnable接口实现多线程。
-    private static class ServerThread implements Runnable {
+    public static class ServerThread implements Runnable {
 
-        //利用ID_Password类进行数据库模拟操作
-        private ArrayList<ID_Password> list;
         public int port;
         private boolean isExit = false;
         private ServerSocket server;
         private String s;
-        ID_Password you;
+        private int id;
+        //利用Group类进行数据库模拟操作
+        public ArrayList<Group> group = new ArrayList<>();
 
         //构造方法
         public ServerThread() {
         }
 
         public ServerThread(int port) {
-            //数据存储的表单
-            list = new ArrayList();
-            SetList(list);
-
-            s="False";
+            s = "True";
+            id = 2000;
 
             this.port = port;
             try {
@@ -47,19 +44,10 @@ public class ClientManager {
             }
         }
 
-        //每次启动服务器时早已经存储好了用户名和密码
-        public ArrayList<ID_Password> SetList(ArrayList<ID_Password> list){
-            ID_Password user1 = new ID_Password(20161596,"090214","谢昊");
-            ID_Password user2 = new ID_Password(20161597,"090215","谢天");
-            list.add(user1);
-            list.add(user2);
-            return list;
-        }
-
         //启动线程为当前的连接服务
         @Override
         public void run() {
-            if(port == 10011){
+            if(port == 10012){
                 try {
                     while (!isExit) {
                         // 进入等待环节
@@ -78,22 +66,15 @@ public class ClientManager {
                                     int len;
                                     while ((len = inputStream.read(buffer)) != -1){
                                         String text = new String(buffer,0,len);
-                                        System.out.println("收到的账号密码为：" + text);
-                                        //验证账号密码是否正确
+                                        System.out.println("收到的建群信息为：" + text);
+                                        //增加群的信息
                                         String[] split = (text).split("//");
                                         OutputStream outputStream = socket.getOutputStream();
-                                        for(int i = 0 ; i < list.size() ; i++){
-                                            int temp = list.get(i).getID();
-                                            String temp2 = list.get(i).getPassword();
-                                            String temp3 = list.get(i).Name;
-                                            if(String.valueOf(temp).equals(split[0]) && temp2.equals(split[1])){
-                                                s = "True";
-                                                you = new ID_Password(temp,temp2,temp3);
-                                            }
-                                        }
-                                        outputStream.write(s.getBytes("utf-8"));
+                                        Group g = new Group(id,split[0],split[1],split[2]);
+                                        group.add(g);
+                                        outputStream.write((String.valueOf(id)+"//"+s).getBytes("utf-8"));
                                         outputStream.flush();
-                                        s = "False";
+                                        id++;
                                     }
                                 }catch (Exception e){
                                     System.out.println("错误信息为：" + e.getMessage());

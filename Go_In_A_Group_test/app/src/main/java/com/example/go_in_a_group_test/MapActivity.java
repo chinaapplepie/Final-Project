@@ -25,7 +25,7 @@ public class MapActivity extends AppCompatActivity {
                     replaceFragment(new Search_Fragment());
                     return true;
                 case R.id.navigation_group:
-
+                    replaceFragment(new Group_Fragment());
                     return true;
             }
             return false;
