@@ -83,7 +83,7 @@ public class Compass_Fragment extends Fragment {
         }
 
         //设置地图的放缩级别
-        aMap.moveCamera(CameraUpdateFactory.zoomTo(16));
+        aMap.moveCamera(CameraUpdateFactory.zoomTo(14));
         //设置英文
         aMap.setMapLanguage(AMap.ENGLISH);
 
@@ -117,7 +117,6 @@ public class Compass_Fragment extends Fragment {
                         .setPositiveButton("sure", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                Toast.makeText(getContext(), "", Toast.LENGTH_SHORT).show();
                                 dialog.dismiss();
                                 new Thread(new Runnable() {
                                     @Override
@@ -125,8 +124,8 @@ public class Compass_Fragment extends Fragment {
                                         try {
                                             //下面得到socket的输出流，并写入内容
                                             OutputStream outputStream = socket.getOutputStream();
-                                            outputStream.write((text_compass.getText().toString()+"//"+longititude +
-                                                    "//" + latitude ).getBytes("utf-8"));
+                                            outputStream.write((text_compass.getText().toString()+"//"+latitude +
+                                                    "//" + longititude + "//" + String.valueOf(Local_Static_Value.you.getID())).getBytes("utf-8"));
                                             outputStream.flush();//刷新缓冲，将缓冲区中的数据全部取出来
                                         } catch (IOException e) {
                                             e.printStackTrace();
@@ -194,7 +193,7 @@ public class Compass_Fragment extends Fragment {
             if (amapLocation != null) {
                 if (amapLocation.getErrorCode() == 0) {
                     LatLng l1 = new LatLng(amapLocation.getLatitude(), amapLocation.getLongitude());
-                    aMap.moveCamera(CameraUpdateFactory.newLatLngZoom(l1, 16.0f));
+                    aMap.moveCamera(CameraUpdateFactory.newLatLngZoom(l1, 14.0f));
                 } else {
                     //显示错误信息ErrCode是错误码，errInfo是错误信息，详见错误码表。
                     Log.e("AmapError", "location Error, ErrCode:"
@@ -259,7 +258,7 @@ public class Compass_Fragment extends Fragment {
                         Log.i("lgq","dddwww===="+longititude);
 
                     }else {
-                        Toast.makeText(getContext(),"地名出错",Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(),"the name of place is wrong!",Toast.LENGTH_SHORT).show();
                         // oastUtils.show(context,"地址名出错");
                     }
                 }
@@ -281,12 +280,29 @@ public class Compass_Fragment extends Fragment {
                     Toast.makeText(getContext(),"Search content cannot be empty!",Toast.LENGTH_SHORT).show();
                 }
                 else{
-                    getLatlon(text_compass.getText().toString());
+
+                    //调用百度翻译
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                String s = text_compass.getText().toString();
+                                s = Baidu_Translate.sentStringToBaidu(s);
+                                System.out.println("字符串："+s);
+                                getLatlon(s);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }).start();
+
+                    aMap.clear();
+
                     markerOption.title(text_compass.getText().toString()).
                             snippet(latitude+","+longititude);
                     markerOption.position(new LatLng(latitude,longititude));
                     aMap.addMarker(markerOption);
-                    aMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude,longititude), 16.0f));
+                    aMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude,longititude), 14.0f));
                 }
             }
         });
@@ -298,7 +314,6 @@ public class Compass_Fragment extends Fragment {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             if (msg.what == 1) {
-                String flag = msg.obj.toString();
                 String[] split = ((String) msg.obj).split("//");
                 if(split[1].equals("True")){
                     Toast.makeText(getContext(),"right!Your group ID"+split[0],Toast.LENGTH_SHORT).show();

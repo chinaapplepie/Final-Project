@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-//此类用来新建group
+//此服务用来新建group
 public class ClientManager3 {
     //Map集合用于储存元素对，Map储存的是一对键值（key和value），是通过key映射到它的value；
     private static Map<String,Socket> clientList = new HashMap<>();
@@ -18,14 +18,11 @@ public class ClientManager3 {
 
     //Runnable是Thread的接口。实现Runnable接口实现多线程。
     public static class ServerThread implements Runnable {
-
         public int port;
         private boolean isExit = false;
         private ServerSocket server;
         private String s;
         private int id;
-        //利用Group类进行数据库模拟操作
-        public ArrayList<Group> group = new ArrayList<>();
 
         //构造方法
         public ServerThread() {
@@ -70,8 +67,15 @@ public class ClientManager3 {
                                         //增加群的信息
                                         String[] split = (text).split("//");
                                         OutputStream outputStream = socket.getOutputStream();
-                                        Group g = new Group(id,split[0],split[1],split[2]);
-                                        group.add(g);
+                                        Group g = new Group(id,split[0],split[1],split[2]);//新建一个群对象
+                                        int temp = Integer.valueOf(split[3]);
+                                        for(int i=0; i <Static_Data.Datas.size(); i++){
+                                            if(Static_Data.Datas.get(i).you.getID() == temp){
+                                                g.add(Static_Data.Datas.get(i).you);//群里加入人员
+                                                Static_Data.Datas.get(i).yourGroup.add(g);//自己的群表里加入该群信息
+                                                Static_Data.group.add(g);//系统群里加入数据
+                                            }
+                                        }
                                         outputStream.write((String.valueOf(id)+"//"+s).getBytes("utf-8"));
                                         outputStream.flush();
                                         id++;

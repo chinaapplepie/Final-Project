@@ -5,11 +5,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-//用来维护群内通信
-public class ClientManager2 {
+public class ClientManager5 {
     //Map集合用于储存元素对，Map储存的是一对键值（key和value），是通过key映射到它的value；
     private static Map<String, Socket> clientList = new HashMap<>();
     //ServerThread类（自定义的真正用于多线程实现服务器端的类）
@@ -17,14 +17,13 @@ public class ClientManager2 {
 
     //Runnable是Thread的接口。实现Runnable接口实现多线程。
     private static class ServerThread implements Runnable {
-
         public int port;
         private boolean isExit = false;
         private ServerSocket server;
+        public ArrayList<Group> return_Group = new ArrayList<>();
 
         //构造方法
         public ServerThread() {
-
         }
 
         public ServerThread(int port) {
@@ -40,7 +39,7 @@ public class ClientManager2 {
         //启动线程为当前的连接服务
         @Override
         public void run() {
-            if(port == 10010){
+            if(port == 10015){
                 try {
                     while (!isExit) {
                         // 进入等待环节
@@ -49,37 +48,43 @@ public class ClientManager2 {
                         // 获取手机连接的地址及端口号
                         final String address = socket.getRemoteSocketAddress().toString();
                         System.out.println("连接成功，连接的手机为：" + address);
-
-                        new Thread(new Runnable() {
+                        new Thread(new Runnable(){
                             @Override
                             public void run() {
                                 try {
-                                    // 单线程索锁
-                                    synchronized (this){
-                                        // 放进到Map中保存
-                                        clientList.put(address,socket);
-                                    }
                                     // 定义输入流
                                     InputStream inputStream = socket.getInputStream();
                                     byte[] buffer = new byte[1024];
                                     int len;
                                     while ((len = inputStream.read(buffer)) != -1){
                                         String text = new String(buffer,0,len);
-                                        System.out.println("收到的数据为：" + text);
-                                        // 在这里群发消息
-                                        sendMsgAll(text);
+                                        System.out.println("收到的地址为：" + text);
+                                        String[] split = (text).split("//");
+                                        //判断服务为Search
+                                        if(split[0].equals("GetGroup")){
+                                            int temp = Integer.valueOf(split[1]);
+                                            OutputStream outputStream = socket.getOutputStream();
+                                            String m = "GetGroup";
+                                            for(int i=0; i <Static_Data.Datas.size(); i++) {
+                                                if (Static_Data.Datas.get(i).you.getID() == temp) {
+                                                    if(Static_Data.Datas.get(i).yourGroup.size()>0){
+                                                        for(int j = 0; j<Static_Data.Datas.get(i).yourGroup.size(); j++){
+                                                            m=m+"&&";
+                                                            m=m+Static_Data.Datas.get(i).yourGroup.get(j).Build_String();
+                                                        }
+                                                        System.out.println("返回字符串："+m);
+                                                    }
+                                                }
+                                            }
+                                            outputStream.write(m.getBytes("utf-8"));
+                                            outputStream.flush();
+                                        }
                                     }
                                 }catch (Exception e){
                                     System.out.println("错误信息为：" + e.getMessage());
-                                }finally {
-                                    synchronized (this){
-                                        System.out.println("关闭链接：" + address);
-                                        clientList.remove(address);
-                                    }
                                 }
                             }
                         }).start();
-
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -124,19 +129,5 @@ public class ClientManager2 {
         }
         serverThread.Stop();
         clientList.clear();
-    }
-
-    // 自定义群发的方法
-    public static boolean sendMsgAll(String msg){
-        try {
-            for (Socket socket : clientList.values()) {
-                OutputStream outputStream = socket.getOutputStream();
-                outputStream.write(msg.getBytes("utf-8"));//getBytes()是将一个字符串转化为一个字节数组
-            }
-            return true;
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        return false;
     }
 }

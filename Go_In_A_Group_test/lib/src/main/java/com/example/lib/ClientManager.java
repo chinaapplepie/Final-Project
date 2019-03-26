@@ -18,23 +18,17 @@ public class ClientManager {
 
     //Runnable是Thread的接口。实现Runnable接口实现多线程。
     private static class ServerThread implements Runnable {
-
-        //利用ID_Password类进行数据库模拟操作
-        private ArrayList<ID_Password> list;
         public int port;
         private boolean isExit = false;
         private ServerSocket server;
         private String s;
-        ID_Password you;
 
         //构造方法
         public ServerThread() {
         }
 
         public ServerThread(int port) {
-            //数据存储的表单
-            list = new ArrayList();
-            SetList(list);
+            SetList(Static_Data.id_password);
 
             s="False";
 
@@ -81,19 +75,24 @@ public class ClientManager {
                                         System.out.println("收到的账号密码为：" + text);
                                         //验证账号密码是否正确
                                         String[] split = (text).split("//");
-                                        OutputStream outputStream = socket.getOutputStream();
-                                        for(int i = 0 ; i < list.size() ; i++){
-                                            int temp = list.get(i).getID();
-                                            String temp2 = list.get(i).getPassword();
-                                            String temp3 = list.get(i).Name;
-                                            if(String.valueOf(temp).equals(split[0]) && temp2.equals(split[1])){
-                                                s = "True";
-                                                you = new ID_Password(temp,temp2,temp3);
+                                        if(split[0].equals("Load")){
+                                            OutputStream outputStream = socket.getOutputStream();
+                                            for(int i = 0 ; i < Static_Data.id_password.size() ; i++){
+                                                int temp = Static_Data.id_password.get(i).getID();
+                                                String temp2 = Static_Data.id_password.get(i).getPassword();
+                                                String temp3 = Static_Data.id_password.get(i).Name;
+                                                if(String.valueOf(temp).equals(split[1]) && temp2.equals(split[2])){
+                                                    s = "True";
+                                                    Static_Value temp_data = new Static_Value(new ID_Password(temp,temp2,temp3));
+                                                    Static_Data.Datas.add(temp_data);
+                                                    s= s+"//"+String.valueOf(temp)+"//"+temp2+"//"+temp3;
+                                                }
                                             }
+                                            System.out.println("将返回的s为：" + s);
+                                            outputStream.write(("Load"+"//"+s).getBytes("utf-8"));
+                                            outputStream.flush();
+                                            s = "False";
                                         }
-                                        outputStream.write(s.getBytes("utf-8"));
-                                        outputStream.flush();
-                                        s = "False";
                                     }
                                 }catch (Exception e){
                                     System.out.println("错误信息为：" + e.getMessage());

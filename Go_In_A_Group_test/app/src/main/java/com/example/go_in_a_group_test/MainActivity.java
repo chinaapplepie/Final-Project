@@ -1,8 +1,12 @@
 package com.example.go_in_a_group_test;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -15,7 +19,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private EditText Text_ID;
@@ -29,6 +35,25 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Text_ID = (EditText)findViewById(R.id.editText_ID);
         Text_Password = (EditText)findViewById(R.id.editText_Password);
+
+        List<String> permissionList = new ArrayList<>();
+        if(ContextCompat.checkSelfPermission(MainActivity.this,Manifest.permission.ACCESS_FINE_LOCATION) !=
+                PackageManager.PERMISSION_GRANTED){
+            permissionList.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        if(ContextCompat.checkSelfPermission(MainActivity.this,Manifest.permission.READ_PHONE_STATE) !=
+                PackageManager.PERMISSION_GRANTED){
+            permissionList.add(Manifest.permission.READ_PHONE_STATE);
+        }
+        if(ContextCompat.checkSelfPermission(MainActivity.this,Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+                PackageManager.PERMISSION_GRANTED){
+            permissionList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+        if(!permissionList.isEmpty()){
+            String[] permisssions = permissionList.toArray(new String[permissionList.size()]);
+            ActivityCompat.requestPermissions(MainActivity.this,permisssions,1);
+        }
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -65,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         //下面得到socket的输出流，并写入内容
                         OutputStream outputStream = socket.getOutputStream();
-                        outputStream.write((id + "//" + password).getBytes("utf-8"));
+                        outputStream.write(("Load"+"//"+id + "//" + password).getBytes("utf-8"));
                         outputStream.flush();//刷新缓冲，将缓冲区中的数据全部取出来
 
                     } catch (IOException e) {
@@ -82,14 +107,17 @@ public class MainActivity extends AppCompatActivity {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             if (msg.what == 1) {
-                String flag = msg.obj.toString();
-                if(flag.equals("True")){
-                    Toast.makeText(MainActivity.this,"right!",Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(MainActivity.this,MapActivity.class);
-                    startActivity(intent);
-                }
-                else if(flag.equals("False")){
-                    Toast.makeText(MainActivity.this,"failed!",Toast.LENGTH_SHORT).show();
+                String[] split = ((String) msg.obj).split("//");
+                if (split[0].equals("Load")) {
+                    if(split[1].equals("True")){
+                        Toast.makeText(MainActivity.this,"right!",Toast.LENGTH_SHORT).show();
+                        Local_Static_Value.you = new Local_ID_Password(Integer.valueOf(split[2]),split[3],split[4]);
+                        Intent intent = new Intent(MainActivity.this,MapActivity.class);
+                        startActivity(intent);
+                    }
+                    else if(split[1].equals("False")){
+                        Toast.makeText(MainActivity.this,"failed!",Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         }
